@@ -161,13 +161,13 @@ fn large_filename() {
     let path = td.path().join("test");
     t!(t!(File::create(&path)).write_all(b"test"));
 
-    let filename = repeat("abcd/").take(50).collect::<String>();
+    let filename = "abcd/".repeat(50);
     let mut header = Header::new_ustar();
     header.set_path(&filename).unwrap();
     header.set_metadata(&t!(fs::metadata(&path)));
     header.set_cksum();
     t!(ar.append(&header, &b"test"[..]));
-    let too_long = repeat("abcd").take(200).collect::<String>();
+    let too_long = "abcd".repeat(200);
     t!(ar.append_file(&too_long, &mut t!(File::open(&path))));
     t!(ar.append_data(&mut header, &too_long, &b"test"[..]));
 
@@ -286,9 +286,9 @@ fn check_dirtree(td: &TempDir) {
     let dir_a = td.path().join("a");
     let dir_b = td.path().join("a/b");
     let file_c = td.path().join("a/c");
-    assert!(fs::metadata(&dir_a).map(|m| m.is_dir()).unwrap_or(false));
-    assert!(fs::metadata(&dir_b).map(|m| m.is_dir()).unwrap_or(false));
-    assert!(fs::metadata(&file_c).map(|m| m.is_file()).unwrap_or(false));
+    assert!(fs::metadata(dir_a).map(|m| m.is_dir()).unwrap_or(false));
+    assert!(fs::metadata(dir_b).map(|m| m.is_dir()).unwrap_or(false));
+    assert!(fs::metadata(file_c).map(|m| m.is_file()).unwrap_or(false));
 }
 
 #[test]
@@ -440,13 +440,13 @@ fn writing_directories_recursively() {
     let base_dir = td.path().join("foobar");
     assert!(fs::metadata(&base_dir).map(|m| m.is_dir()).unwrap_or(false));
     let file1_path = base_dir.join("file1");
-    assert!(fs::metadata(&file1_path)
+    assert!(fs::metadata(file1_path)
         .map(|m| m.is_file())
         .unwrap_or(false));
     let sub_dir = base_dir.join("sub");
     assert!(fs::metadata(&sub_dir).map(|m| m.is_dir()).unwrap_or(false));
     let file2_path = sub_dir.join("file2");
-    assert!(fs::metadata(&file2_path)
+    assert!(fs::metadata(file2_path)
         .map(|m| m.is_file())
         .unwrap_or(false));
 }
@@ -469,15 +469,15 @@ fn append_dir_all_blank_dest() {
     let mut ar = Archive::new(Cursor::new(data));
     t!(ar.unpack(td.path()));
     let base_dir = td.path();
-    assert!(fs::metadata(&base_dir).map(|m| m.is_dir()).unwrap_or(false));
+    assert!(fs::metadata(base_dir).map(|m| m.is_dir()).unwrap_or(false));
     let file1_path = base_dir.join("file1");
-    assert!(fs::metadata(&file1_path)
+    assert!(fs::metadata(file1_path)
         .map(|m| m.is_file())
         .unwrap_or(false));
     let sub_dir = base_dir.join("sub");
     assert!(fs::metadata(&sub_dir).map(|m| m.is_dir()).unwrap_or(false));
     let file2_path = sub_dir.join("file2");
-    assert!(fs::metadata(&file2_path)
+    assert!(fs::metadata(file2_path)
         .map(|m| m.is_file())
         .unwrap_or(false));
 }
@@ -501,7 +501,7 @@ fn extracting_duplicate_dirs() {
     t!(ar.unpack(td.path()));
 
     let some_dir = td.path().join("some_dir");
-    assert!(fs::metadata(&some_dir).map(|m| m.is_dir()).unwrap_or(false));
+    assert!(fs::metadata(some_dir).map(|m| m.is_dir()).unwrap_or(false));
 }
 
 #[test]
@@ -968,7 +968,7 @@ fn encoded_long_name_has_trailing_nul() {
     t!(t!(File::create(&path)).write_all(b"test"));
 
     let mut b = Builder::new(Vec::<u8>::new());
-    let long = repeat("abcd").take(200).collect::<String>();
+    let long = "abcd".repeat(200);
 
     t!(b.append_file(&long, &mut t!(File::open(&path))));
 
@@ -1083,10 +1083,10 @@ fn sparse_with_trailing() {
     let mut a = t!(entries.next().unwrap());
     let mut s = String::new();
     t!(a.read_to_string(&mut s));
-    assert_eq!(0x100_00c, s.len());
+    assert_eq!(0x0010_000c, s.len());
     assert_eq!(&s[..0xc], "0MB through\n");
-    assert!(s[0xc..0x100_000].chars().all(|x| x == '\u{0}'));
-    assert_eq!(&s[0x100_000..], "1MB through\n");
+    assert!(s[0xc..0x0010_0000].chars().all(|x| x == '\u{0}'));
+    assert_eq!(&s[0x0010_0000..], "1MB through\n");
 }
 
 #[test]
@@ -1142,8 +1142,8 @@ fn append_path_symlink() {
     ar.follow_symlinks(false);
     let td = t!(TempBuilder::new().prefix("tar-rs").tempdir());
 
-    let long_linkname = repeat("abcd").take(30).collect::<String>();
-    let long_pathname = repeat("dcba").take(30).collect::<String>();
+    let long_linkname = "abcd".repeat(30);
+    let long_pathname = "dcba".repeat(30);
     t!(env::set_current_dir(td.path()));
     // "short" path name / short link name
     t!(symlink("testdest", "test"));
