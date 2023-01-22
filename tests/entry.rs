@@ -1,5 +1,5 @@
-extern crate tar;
-extern crate tempfile;
+use tar;
+
 
 use std::fs::{create_dir, File};
 use std::io::Read;

@@ -1,7 +1,7 @@
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;
-use std::{iter, mem, thread, time};
+use std::{mem, thread, time};
 
 use tempfile::Builder;
 

@@ -1,6 +1,6 @@
-extern crate filetime;
-extern crate tar;
-extern crate tempfile;
+
+use tar;
+
 #[cfg(all(unix, feature = "xattr"))]
 extern crate xattr;
 
@@ -203,7 +203,7 @@ fn large_filename() {
     assert!(entries.next().is_none());
 }
 
-fn reading_entries_common<R: Read>(mut entries: Entries<R>) {
+fn reading_entries_common<R: Read>(mut entries: Entries<'_, R>) {
     let mut a = t!(entries.next().unwrap());
     assert_eq!(&*a.header().path_bytes(), b"a");
     let mut s = String::new();

@@ -1,4 +1,4 @@
-extern crate tar;
+
 
 use std::fs::File;
 use tar::Builder;

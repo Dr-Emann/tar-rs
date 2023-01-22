@@ -2,7 +2,7 @@
 //!
 //! Takes a tarball on stdin and prints out all of the entries inside.
 
-extern crate tar;
+
 
 use std::io::stdin;
 

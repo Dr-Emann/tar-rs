@@ -331,7 +331,7 @@ impl Header {
     ///
     /// Note that this function will convert any `\` characters to directory
     /// separators.
-    pub fn path(&self) -> io::Result<Cow<Path>> {
+    pub fn path(&self) -> io::Result<Cow<'_, Path>> {
         bytes2path(self.path_bytes())
     }
 
@@ -342,7 +342,7 @@ impl Header {
     ///
     /// Note that this function will convert any `\` characters to directory
     /// separators.
-    pub fn path_bytes(&self) -> Cow<[u8]> {
+    pub fn path_bytes(&self) -> Cow<'_, [u8]> {
         if let Some(ustar) = self.as_ustar() {
             ustar.path_bytes()
         } else {
@@ -391,7 +391,7 @@ impl Header {
     ///
     /// Note that this function will convert any `\` characters to directory
     /// separators.
-    pub fn link_name(&self) -> io::Result<Option<Cow<Path>>> {
+    pub fn link_name(&self) -> io::Result<Option<Cow<'_, Path>>> {
         match self.link_name_bytes() {
             Some(bytes) => bytes2path(bytes).map(Some),
             None => Ok(None),
@@ -405,7 +405,7 @@ impl Header {
     ///
     /// Note that this function will convert any `\` characters to directory
     /// separators.
-    pub fn link_name_bytes(&self) -> Option<Cow<[u8]>> {
+    pub fn link_name_bytes(&self) -> Option<Cow<'_, [u8]>> {
         let old = self.as_old();
         if old.linkname[0] != 0 {
             Some(Cow::Borrowed(truncate(&old.linkname)))
@@ -841,7 +841,7 @@ impl Header {
         });
     }
 
-    fn debug_fields(&self, b: &mut fmt::DebugStruct) {
+    fn debug_fields(&self, b: &mut fmt::DebugStruct<'_, '_>) {
         if let Ok(entry_size) = self.entry_size() {
             b.field("entry_size", &entry_size);
         }
@@ -888,7 +888,7 @@ impl Header {
 struct DebugAsOctal<T>(T);
 
 impl<T: fmt::Octal> fmt::Debug for DebugAsOctal<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Octal::fmt(&self.0, f)
     }
 }
@@ -912,7 +912,7 @@ impl Clone for Header {
 }
 
 impl fmt::Debug for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(me) = self.as_ustar() {
             me.fmt(f)
         } else if let Some(me) = self.as_gnu() {
@@ -936,7 +936,7 @@ impl OldHeader {
 }
 
 impl fmt::Debug for OldHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("OldHeader");
         self.as_header().debug_fields(&mut f);
         f.finish()
@@ -945,7 +945,7 @@ impl fmt::Debug for OldHeader {
 
 impl UstarHeader {
     /// See `Header::path_bytes`
-    pub fn path_bytes(&self) -> Cow<[u8]> {
+    pub fn path_bytes(&self) -> Cow<'_, [u8]> {
         if self.prefix[0] == 0 && !self.name.contains(&b'\\') {
             Cow::Borrowed(truncate(&self.name))
         } else {
@@ -1107,7 +1107,7 @@ impl UstarHeader {
 }
 
 impl fmt::Debug for UstarHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("UstarHeader");
         self.as_header().debug_fields(&mut f);
         f.finish()
@@ -1278,7 +1278,7 @@ impl GnuHeader {
 }
 
 impl fmt::Debug for GnuHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("GnuHeader");
         self.as_header().debug_fields(&mut f);
         if let Ok(atime) = self.atime() {
@@ -1296,7 +1296,7 @@ impl fmt::Debug for GnuHeader {
 struct DebugSparseHeaders<'a>(&'a [GnuSparseHeader]);
 
 impl<'a> fmt::Debug for DebugSparseHeaders<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_list();
         for header in self.0 {
             if !header.is_empty() {
@@ -1339,7 +1339,7 @@ impl GnuSparseHeader {
 }
 
 impl fmt::Debug for GnuSparseHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("GnuSparseHeader");
         if let Ok(offset) = self.offset() {
             f.field("offset", &offset);
@@ -1584,7 +1584,7 @@ pub fn path2bytes(p: &Path) -> io::Result<Cow<[u8]>> {
 
 #[cfg(unix)]
 /// On unix this will never fail
-pub fn path2bytes(p: &Path) -> io::Result<Cow<[u8]>> {
+pub fn path2bytes(p: &Path) -> io::Result<Cow<'_, [u8]>> {
     Ok(p.as_os_str().as_bytes()).map(Cow::Borrowed)
 }
 
@@ -1613,7 +1613,7 @@ pub fn bytes2path(bytes: Cow<[u8]>) -> io::Result<Cow<Path>> {
 
 #[cfg(unix)]
 /// On unix this operation can never fail.
-pub fn bytes2path(bytes: Cow<[u8]>) -> io::Result<Cow<Path>> {
+pub fn bytes2path(bytes: Cow<'_, [u8]>) -> io::Result<Cow<'_, Path>> {
     use std::ffi::{OsStr, OsString};
 
     Ok(match bytes {
